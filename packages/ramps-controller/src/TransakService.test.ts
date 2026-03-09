@@ -1686,6 +1686,48 @@ describe('TransakService', () => {
       await expect(promise).rejects.toThrow("failed with status '503'");
     });
 
+    it('passes through errorCode from the API response when present', async () => {
+      const depositOrderId = `${STAGING_PROVIDER_PATH}/orders/order-abc-123`;
+      const orderWithErrorCode = {
+        ...MOCK_DEPOSIT_ORDER,
+        status: 'FAILED',
+        errorCode: '4005',
+      };
+
+      nock(STAGING_ORDERS_BASE)
+        .get(`${STAGING_PROVIDER_PATH}/orders/order-abc-123`)
+        .query(true)
+        .reply(200, orderWithErrorCode);
+
+      const { service } = getService();
+
+      const promise = service.getOrder(depositOrderId, '0x1234');
+      await jest.runAllTimersAsync();
+      await flushPromises();
+      const result = await promise;
+
+      expect(result.errorCode).toBe('4005');
+      expect(result.status).toBe('FAILED');
+    });
+
+    it('returns undefined errorCode when not present in the API response', async () => {
+      const depositOrderId = `${STAGING_PROVIDER_PATH}/orders/order-abc-123`;
+
+      nock(STAGING_ORDERS_BASE)
+        .get(`${STAGING_PROVIDER_PATH}/orders/order-abc-123`)
+        .query(true)
+        .reply(200, MOCK_DEPOSIT_ORDER);
+
+      const { service } = getService();
+
+      const promise = service.getOrder(depositOrderId, '0x1234');
+      await jest.runAllTimersAsync();
+      await flushPromises();
+      const result = await promise;
+
+      expect(result.errorCode).toBeUndefined();
+    });
+
     it('gracefully handles failure when fetching paymentDetails from Transak', async () => {
       const depositOrderId = `${STAGING_PROVIDER_PATH}/orders/order-abc-123`;
       const orderWithoutPaymentDetails = {

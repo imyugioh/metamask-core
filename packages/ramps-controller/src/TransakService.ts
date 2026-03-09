@@ -183,6 +183,7 @@ export type TransakDepositOrder = {
   orderType: 'DEPOSIT';
   exchangeRate?: number;
   statusDescription?: string;
+  errorCode?: string;
   paymentDetails: TransakOrderPaymentMethod[];
   partnerFees?: number;
   networkFees?: number;
